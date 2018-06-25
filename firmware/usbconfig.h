@@ -218,7 +218,7 @@ section at the end of this file).
 
 /* -------------------------- Device Description --------------------------- */
 
-#define USBDESCR_VERSION 0x10, 0x01
+#define USBDESCR_VERSION 0x00, 0x02
 /* USB version supported: Minor number first, then major number.
 */
 #define  USB_CFG_VENDOR_ID  0xc0, 0x16  /* 5824 in dec, stands for VOTI */
@@ -261,9 +261,9 @@ section at the end of this file).
  * to fine tune control over USB descriptors such as the string descriptor
  * for the serial number.
  */
-/*#define USB_CFG_OS_STRING 'M', 'S', 'F', 'T', '1', '0', '0', GET_MS_DESCRIPTOR */
-/*#define USB_CFG_OS_STRING_LEN 8 */
-/*#define GET_MS_DESCRIPTOR 0x7f */ /* command for requesting the OS feature descriptor */
+#define USB_CFG_OS_STRING 'M', 'S', 'F', 'T', '1', '0', '0', GET_MS_DESCRIPTOR
+#define USB_CFG_OS_STRING_LEN 8
+#define GET_MS_DESCRIPTOR 126 /* command for requesting the OS feature descriptor */
  /* OS String Descriptor for Windows WinUSB driver.
  */
 #define USB_CFG_DEVICE_CLASS    0xff

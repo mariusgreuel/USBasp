@@ -37,7 +37,17 @@ static unsigned int prog_pagesize;
 static uchar prog_blockflags;
 static uchar prog_pagecounter;
 
+static const usbExtCompatDescriptor_t msExtCompatDescriptor =
+{
+    { sizeof(usbExtCompatDescriptor_t), 0x0100, 0x0004, 1 },
+    0,
+    1,
+    "WINUSB",
+    ""
+};
+
 uchar usbFunctionSetup(uchar data[8]) {
+    const usbRequest_t* request = (const usbRequest_t*)data;
 
 	uchar len = 0;
 
@@ -190,6 +200,14 @@ uchar usbFunctionSetup(uchar data[8]) {
 		replyBuffer[2] = 0;
 		replyBuffer[3] = 0;
 		len = 4;
+	} else if (request->bRequest == GET_MS_DESCRIPTOR) {
+        if (request->wIndex.word == 0x0004)
+        {
+            usbMsgPtr = (usbMsgPtr_t)&msExtCompatDescriptor;
+            return sizeof(msExtCompatDescriptor);
+        }
+
+        return 0;
 	}
 
 	usbMsgPtr = replyBuffer;
