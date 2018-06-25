@@ -5,7 +5,6 @@
  * Tabsize: 4
  * Copyright: (c) 2005 by OBJECTIVE DEVELOPMENT Software GmbH
  * License: GNU GPL v2 (see License.txt), GNU GPL v3 or proprietary (CommercialLicense.txt)
- * This Revision: $Id: usbconfig-prototype.h 785 2010-05-30 17:57:07Z cs $
  */
 
 #ifndef __usbconfig_h_included__
@@ -219,6 +218,9 @@ section at the end of this file).
 
 /* -------------------------- Device Description --------------------------- */
 
+#define USBDESCR_VERSION 0x10, 0x01
+/* USB version supported: Minor number first, then major number.
+*/
 #define  USB_CFG_VENDOR_ID       0xc0, 0x16 /* = 0x16c0 = 5824 = voti.nl */
 /* USB vendor ID for the device, low byte first. If you have registered your
  * own Vendor ID, define it here. Otherwise you may use one of obdev's free
@@ -266,6 +268,11 @@ section at the end of this file).
  * compile time. See the section about descriptor properties below for how
  * to fine tune control over USB descriptors such as the string descriptor
  * for the serial number.
+ */
+/*#define USB_CFG_OS_STRING 'M', 'S', 'F', 'T', '1', '0', '0', GET_MS_DESCRIPTOR */
+/*#define USB_CFG_OS_STRING_LEN 8 */
+/*#define GET_MS_DESCRIPTOR 0x7f */ /* command for requesting the OS feature descriptor */
+ /* OS String Descriptor for Windows WinUSB driver.
  */
 #define USB_CFG_DEVICE_CLASS        0xff    /* set to 0 if deferred to interface */
 #define USB_CFG_DEVICE_SUBCLASS     0
@@ -352,9 +359,19 @@ section at the end of this file).
 #define USB_CFG_DESCR_PROPS_STRING_VENDOR           0
 #define USB_CFG_DESCR_PROPS_STRING_PRODUCT          0
 #define USB_CFG_DESCR_PROPS_STRING_SERIAL_NUMBER    0
+#define USB_CFG_DESCR_PROPS_STRING_OS_STRING        0
 #define USB_CFG_DESCR_PROPS_HID                     0
 #define USB_CFG_DESCR_PROPS_HID_REPORT              0
 #define USB_CFG_DESCR_PROPS_UNKNOWN                 0
+
+
+//#define usbMsgPtr_t unsigned short
+/* If usbMsgPtr_t is not defined, it defaults to 'uchar *'. We may define it to
+ * a scalar type here because gcc generates slightly shorter code for scalar
+ * arithmetics than for pointer arithmetics. Remove this define for backward
+ * type compatibility or define it to an 8 bit type if you use data in RAM only
+ * and all RAM is below 256 bytes (tiny memory model in IAR CC).
+ */
 
 /* ----------------------- Optional MCU Description ------------------------ */
 

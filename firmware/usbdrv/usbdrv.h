@@ -5,13 +5,14 @@
  * Tabsize: 4
  * Copyright: (c) 2005 by OBJECTIVE DEVELOPMENT Software GmbH
  * License: GNU GPL v2 (see License.txt), GNU GPL v3 or proprietary (CommercialLicense.txt)
- * This Revision: $Id: usbdrv.h 793 2010-07-15 15:58:11Z cs $
  */
 
 #ifndef __usbdrv_h_included__
 #define __usbdrv_h_included__
-#include "usbconfig.h"
-#include "usbportability.h"
+
+#ifndef __ASSEMBLER__
+#include <stdint.h>
+#endif
 
 /*
 Hardware Prerequisites:
@@ -118,11 +119,28 @@ USB messages, even if they address another (low-speed) device on the same bus.
 
 */
 
+
+#ifdef __cplusplus
+// This header should be included as C-header from C++ code. However if usbdrv.c
+// is incorporated into a C++ module with an include, function names are mangled
+// and this header must be parsed as C++ header, too. External modules should be
+// treated as C, though, because they are compiled separately as C code.
+extern "C" {
+#endif
+
+#include "usbconfig.h"
+#include "usbportability.h"
+
+#ifdef __cplusplus
+}
+#endif
+
+
 /* ------------------------------------------------------------------------- */
 /* --------------------------- Module Interface ---------------------------- */
 /* ------------------------------------------------------------------------- */
 
-#define USBDRV_VERSION  20100715
+#define USBDRV_VERSION  20121206
 /* This define uniquely identifies a driver version. It is a decimal number
  * constructed from the driver's release date in the form YYYYMMDD. If the
  * driver's behavior or interface changes, you can use this constant to
@@ -163,6 +181,17 @@ USB messages, even if they address another (low-speed) device on the same bus.
  */
 #define USB_NO_MSG  ((usbMsgLen_t)-1)   /* constant meaning "no message" */
 
+#ifndef usbMsgPtr_t
+#define usbMsgPtr_t uchar *
+#endif
+/* Making usbMsgPtr_t a define allows the user of this library to define it to
+ * an 8 bit type on tiny devices. This reduces code size, especially if the
+ * compiler supports a tiny memory model.
+ * The type can be a pointer or scalar type, casts are made where necessary.
+ * Although it's paradoxical, Gcc 4 generates slightly better code for scalar
+ * types than for pointers.
+ */
+
 struct usbRequest;  /* forward declaration */
 
 USB_PUBLIC void usbInit(void);
@@ -178,11 +207,20 @@ USB_PUBLIC void usbPoll(void);
  * Please note that debug outputs through the UART take ~ 0.5ms per byte
  * at 19200 bps.
  */
-extern uchar *usbMsgPtr;
+extern usbMsgPtr_t usbMsgPtr;
 /* This variable may be used to pass transmit data to the driver from the
  * implementation of usbFunctionWrite(). It is also used internally by the
  * driver for standard control requests.
  */
+
+extern uchar usbMsgFlags;    /* flag values see USB_FLG_* */
+/* Can be set to `USB_FLG_MSGPTR_IS_ROM` in `usbFunctionSetup()` or
+ * `usbFunctionDescriptor()` if `usbMsgPtr` has been set to a flash memory
+ * address.
+ */
+
+#define USB_FLG_MSGPTR_IS_ROM   (1<<6)
+
 USB_PUBLIC usbMsgLen_t usbFunctionSetup(uchar data[8]);
 /* This function is called when the driver receives a SETUP transaction from
  * the host which is not answered by the driver itself (in practice: class and
@@ -390,13 +428,13 @@ extern volatile schar   usbRxLen;
  * about the various methods to define USB descriptors. If you do nothing,
  * the default descriptors will be used.
  */
-#define USB_PROP_IS_DYNAMIC     (1 << 14)
+#define USB_PROP_IS_DYNAMIC     (1u << 14)
 /* If this property is set for a descriptor, usbFunctionDescriptor() will be
  * used to obtain the particular descriptor. Data directly returned via
  * usbMsgPtr are FLASH data by default, combine (OR) with USB_PROP_IS_RAM to
  * return RAM data.
  */
-#define USB_PROP_IS_RAM         (1 << 15)
+#define USB_PROP_IS_RAM         (1u << 15)
 /* If this property is set for a descriptor, the data is read from RAM
  * memory instead of Flash. The property is used for all methods to provide
  * external descriptors.
@@ -428,6 +466,9 @@ extern volatile schar   usbRxLen;
 #ifndef USB_CFG_DESCR_PROPS_STRING_SERIAL_NUMBER
 #define USB_CFG_DESCR_PROPS_STRING_SERIAL_NUMBER    0
 #endif
+#ifndef USB_CFG_DESCR_PROPS_STRING_OS_STRING
+#define USB_CFG_DESCR_PROPS_STRING_OS_STRING        0
+#endif
 #ifndef USB_CFG_DESCR_PROPS_HID
 #define USB_CFG_DESCR_PROPS_HID                     0
 #endif
@@ -450,45 +491,51 @@ extern volatile schar   usbRxLen;
 #ifndef __ASSEMBLER__
 extern
 #if !(USB_CFG_DESCR_PROPS_DEVICE & USB_PROP_IS_RAM)
-PROGMEM
+PROGMEM const
 #endif
-char usbDescriptorDevice[];
+uchar usbDescriptorDevice[];
 
 extern
 #if !(USB_CFG_DESCR_PROPS_CONFIGURATION & USB_PROP_IS_RAM)
-PROGMEM
+PROGMEM const
 #endif
-char usbDescriptorConfiguration[];
+uchar usbDescriptorConfiguration[];
 
 extern
 #if !(USB_CFG_DESCR_PROPS_HID_REPORT & USB_PROP_IS_RAM)
-PROGMEM
+PROGMEM const
 #endif
-char usbDescriptorHidReport[];
+uchar usbDescriptorHidReport[];
 
 extern
 #if !(USB_CFG_DESCR_PROPS_STRING_0 & USB_PROP_IS_RAM)
-PROGMEM
+PROGMEM const
 #endif
-char usbDescriptorString0[];
+uchar usbDescriptorString0[];
 
 extern
 #if !(USB_CFG_DESCR_PROPS_STRING_VENDOR & USB_PROP_IS_RAM)
-PROGMEM
+PROGMEM const
 #endif
 int usbDescriptorStringVendor[];
 
 extern
 #if !(USB_CFG_DESCR_PROPS_STRING_PRODUCT & USB_PROP_IS_RAM)
-PROGMEM
+PROGMEM const
 #endif
 int usbDescriptorStringDevice[];
 
 extern
 #if !(USB_CFG_DESCR_PROPS_STRING_SERIAL_NUMBER & USB_PROP_IS_RAM)
-PROGMEM
+PROGMEM const
 #endif
 int usbDescriptorStringSerialNumber[];
+
+extern
+#if !(USB_CFG_DESCR_PROPS_STRING_OS_STRING & USB_PROP_IS_RAM)
+PROGMEM const
+#endif
+int usbDescriptorStringOsString[];
 
 #endif /* __ASSEMBLER__ */
 
@@ -669,6 +716,26 @@ typedef struct usbRequest{
     usbWord_t   wLength;
 }usbRequest_t;
 /* This structure matches the 8 byte setup request */
+
+typedef struct
+{
+    uint32_t dwLength;
+    uint16_t bcdVersion;
+    uint16_t wIndex;
+    uint8_t bCount;
+    uint8_t reserved[7];
+} usbExtCompatHeader_t;
+
+typedef struct
+{
+    usbExtCompatHeader_t header;
+    uint8_t bFirstInterfaceNumber;
+    uint8_t reserved1;
+    char compatibleID[8];
+    char subCompatibleID[8];
+    uint8_t reserved2[6];
+} usbExtCompatDescriptor_t;
+
 #endif
 
 /* bmRequestType field in USB setup:
@@ -719,6 +786,7 @@ typedef struct usbRequest{
 #define USBDESCR_HID_PHYS       0x23
 
 //#define USBATTR_BUSPOWER        0x80  // USB 1.1 does not define this value any more
+#define USBATTR_BUSPOWER        0
 #define USBATTR_SELFPOWER       0x40
 #define USBATTR_REMOTEWAKE      0x20
 
