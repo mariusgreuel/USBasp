@@ -1,11 +1,3 @@
-This is a fork of https://www.fischl.de/usbasp
-
-This goal of this fork is to add WINUSB support to USBasp to improve support for Windows and eliminate the need for third-party USB drivers.
-
-Note: When the Windows built-in WINUSB driver is used, you also need a avrdude.exe that has WINUSB support compiled in.
-
---
-
 This is the README file for USBasp.
 
 USBasp is a USB in-circuit programmer for Atmel AVR controllers. It simply
